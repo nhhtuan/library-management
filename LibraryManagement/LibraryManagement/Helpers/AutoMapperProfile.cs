@@ -1,5 +1,6 @@
 using AutoMapper;
 using LibraryManagement.DTOs.Auth;
+using LibraryManagement.DTOs.Book;
 using LibraryManagement.DTOs.User;
 using LibraryManagement.Enums;
 using LibraryManagement.Models;
@@ -23,6 +24,9 @@ namespace LibraryManagement.Helpers
             CreateMap<UpdateUserRequest, UserResponse>();
             // Auth mappings
             CreateMap<LoginRequest, User>();
+
+            // Book mappings
+            CreateMap<Book, BookResponse>();
         }
     }
 }

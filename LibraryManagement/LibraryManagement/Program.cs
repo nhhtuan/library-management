@@ -27,6 +27,7 @@ builder.Services.AddDbContext<LibraryDbContext>(opt =>
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -83,5 +84,12 @@ using (var scope = app.Services.CreateScope())
         db.SaveChanges();
     }
 }
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await DbInitializer.Initialize(services);
+}
+
 
 app.Run();
