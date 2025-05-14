@@ -23,7 +23,7 @@ public class AuthService : IAuthService
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
 
-        var user = await _db.Users.SingleOrDefaultAsync(u => u.Username == request.Username);
+        var user = await _db.Users.SingleOrDefaultAsync(u => u.Username == request.Username && u.DeletedAt == null);
         if (user == null)
             throw new UnauthorizedAccessException("Invalid username or password");
 

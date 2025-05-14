@@ -1,6 +1,7 @@
 using AutoMapper;
 using LibraryManagement.DTOs.Auth;
 using LibraryManagement.DTOs.User;
+using LibraryManagement.Enums;
 using LibraryManagement.Models;
 
 namespace LibraryManagement.Helpers
@@ -17,7 +18,9 @@ namespace LibraryManagement.Helpers
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
 
             CreateMap<CreateUserRequest, User>();
-
+            CreateMap<UpdateUserRequest, User>()
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => Enum.Parse<UserRole>(src.UserRole.ToString())));
+            CreateMap<UpdateUserRequest, UserResponse>();
             // Auth mappings
             CreateMap<LoginRequest, User>();
         }

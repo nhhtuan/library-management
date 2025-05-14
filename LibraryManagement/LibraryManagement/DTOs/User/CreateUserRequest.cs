@@ -1,5 +1,8 @@
+using LibraryManagement.Enums;
 using LibraryManagement.Models;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace LibraryManagement.DTOs.User
 {

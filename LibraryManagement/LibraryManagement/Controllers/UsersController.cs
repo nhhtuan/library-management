@@ -53,4 +53,33 @@ public class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
     }
 
+    [HttpPatch("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+    {
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+            return NotFound("User not found");
+
+        _mapper.Map(request, user);
+        var userResponse = await _userService.UpdateUserAsync(id, request);
+
+        return Ok(userResponse);
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+            return NotFound("User not found");
+
+        var result = await _userService.DeleteUserAsync(id);
+        if (!result)
+            return BadRequest("User deletion failed");
+
+        return Ok("User deleted successfully");
+    }
+
 }

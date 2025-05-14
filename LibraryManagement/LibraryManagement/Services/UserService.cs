@@ -22,6 +22,7 @@ public class UserService : IUserService
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
     {
         var users = await _db.Users
+        .Where(u => u.DeletedAt == null)
             .ToListAsync();
 
         return _mapper.Map<IEnumerable<UserDto>>(users);
@@ -29,7 +30,8 @@ public class UserService : IUserService
 
     public async Task<UserResponse> GetUserByIdAsync(int id)
     {
-        var user = await _db.Users.FindAsync(id);
+        var user = await _db.Users.Where(u => u.Id == id && u.DeletedAt == null)
+            .FirstOrDefaultAsync();
         if (user == null)
             throw new KeyNotFoundException("User not found");
 
@@ -50,5 +52,36 @@ public class UserService : IUserService
         await _db.SaveChangesAsync();
 
         return _mapper.Map<UserResponse>(user);
+    }
+
+    public async Task<UserResponse> UpdateUserAsync(int id, UpdateUserRequest request)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        user.Role = request.UserRole;
+        user.FullName = request.FullName;
+        user.DateOfBirth = request.DateOfBirth;
+
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+
+        return _mapper.Map<UserResponse>(user);
+    }
+
+    public async Task<bool> DeleteUserAsync(int id)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        // Soft delete
+        user.DeletedAt = DateTime.UtcNow;
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+        return true;
     }
 }
