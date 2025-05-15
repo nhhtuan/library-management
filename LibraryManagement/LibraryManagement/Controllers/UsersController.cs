@@ -40,15 +40,8 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetUserById(int id)
     {
-        try
-        {
-            var userResponse = await _userService.GetUserByIdAsync(id);
-            return Ok(userResponse);
-        }
-        catch (Exception ex)
-        {
-            return NotFound(ex.Message);
-        }
+        var userResponse = await _userService.GetUserByIdAsync(id);
+        return Ok(userResponse);
     }
 
 
@@ -56,18 +49,12 @@ public class UsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
-        try
-        {
-            var createdUser = await _userService.CreateUserAsync(request);
-            if (createdUser == null)
-                return BadRequest("User creation failed");
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var createdUser = await _userService.CreateUserAsync(request);
+        if (createdUser == null)
+            return BadRequest("User creation failed");
+        return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
     }
+
 
     // [HttpPatch("{id}")]
     // [Authorize(Roles = "Admin")]
@@ -88,36 +75,22 @@ public class UsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> PatchUser(int id, [FromBody] PatchUserRequest request)
     {
-        try
-        {
-            var userResponse = await _userService.PatchUserAsync(id, request);
-            return Ok(userResponse);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var userResponse = await _userService.PatchUserAsync(id, request);
+        return Ok(userResponse);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteUser(int id) // Soft delete
     {
-        try
-        {
-            var user = await _userService.GetUserByIdAsync(id);
+        var result = await _userService.DeleteUserAsync(id);
+        if (!result)
+            return BadRequest("User deletion failed");
 
-            var result = await _userService.DeleteUserAsync(id);
-            if (!result)
-                return BadRequest("User deletion failed");
+        return Ok("User deleted successfully");
 
-            return Ok("User deleted successfully");
-        }
-        catch (Exception ex)
-        {
-            return NotFound(ex.Message);
-        }
     }
+
 
 
     // [HttpDelete("{id}")]
@@ -136,6 +109,5 @@ public class UsersController : ControllerBase
 
     //     return NoContent(); // 204 - Xóa thành công, không trả về nội dung
     // }
-
 
 }

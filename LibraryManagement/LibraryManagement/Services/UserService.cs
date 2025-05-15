@@ -43,7 +43,7 @@ public class UserService : IUserService
     public async Task<UserResponse> CreateUserAsync(CreateUserRequest request)
     {
 
-        if (await _db.Users.AnyAsync(u => u.Username == request.Username && u.DeletedAt == null))
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username))
             throw new InvalidOperationException("Username already exists");
 
         var user = new User
@@ -80,9 +80,10 @@ public class UserService : IUserService
 
     public async Task<bool> DeleteUserAsync(int id)
     {
-        var user = await _db.Users.FindAsync(id);
+        var user = await _db.Users.Where(u => u.Id == id && u.DeletedAt == null)
+            .FirstOrDefaultAsync();
         if (user == null)
-            throw new KeyNotFoundException("User not found");
+            throw new KeyNotFoundException("User not found or already deleted");
 
         // Soft delete
         user.DeletedAt = DateTime.UtcNow;

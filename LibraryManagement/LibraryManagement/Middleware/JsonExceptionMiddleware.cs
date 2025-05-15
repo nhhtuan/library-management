@@ -70,8 +70,7 @@ namespace LibraryManagement.Middleware
             {
                 title = title,
                 status = statusCode,
-                detail = _environment.IsDevelopment() ? exception.Message : "An error occurred.",
-                errors = _environment.IsDevelopment() ? new[] { exception.StackTrace } : null,
+                detail = exception.Message,
                 traceId = context.TraceIdentifier
             };
 

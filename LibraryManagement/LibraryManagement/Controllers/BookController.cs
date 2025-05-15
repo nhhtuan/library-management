@@ -1,5 +1,6 @@
 using AutoMapper;
 using LibraryManagement.DTOs.Book;
+using LibraryManagement.DTOs.User;
 using LibraryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,17 +32,10 @@ public class BookController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetBookById(int id)
     {
-        try
-        {
-            var bookResponse = await _bookService.GetBookByIdAsync(id);
-            if (bookResponse == null)
-                return NotFound("Book not found");
-            return Ok(bookResponse);
-        }
-        catch (Exception ex)
-        {
-            return NotFound(ex.Message);
-        }
+
+        var bookResponse = await _bookService.GetBookByIdAsync(id);
+        return Ok(bookResponse);
+
     }
 
     [HttpPost]
@@ -55,13 +49,21 @@ public class BookController : ControllerBase
     }
 
 
+    // [HttpPatch("{id}")]
+    // [Authorize(Roles = "Admin")]
+    // public async Task<IActionResult> UpdateBook(int id, [FromBody] UpdateBookRequest request)
+    // {
+    //     var bookResponse = await _bookService.UpdateBookAsync(id, request);
+    //     if (bookResponse == null)
+    //         return NotFound("Book not found");
+    //     return Ok(bookResponse);
+    // }
+
     [HttpPatch("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateBook(int id, [FromBody] UpdateBookRequest request)
+    public async Task<IActionResult> PatchBook(int id, [FromBody] PatchBookRequest request)
     {
-        var bookResponse = await _bookService.UpdateBookAsync(id, request);
-        if (bookResponse == null)
-            return NotFound("Book not found");
+        var bookResponse = await _bookService.PatchBookAsync(id, request);
         return Ok(bookResponse);
     }
 
@@ -71,19 +73,9 @@ public class BookController : ControllerBase
     public async Task<IActionResult> DeleteBook(int id)
     {
 
-        try
-        {
-            // Check if the book exists
-            var book = await _bookService.GetBookByIdAsync(id);
-
-            var result = await _bookService.DeleteBookAsync(id);
-            if (!result)
-                return BadRequest("Failed to delete the book");
-            return Ok("Book deleted successfully");
-        }
-        catch (Exception ex)
-        {
-            return NotFound(ex.Message);
-        }
+        var result = await _bookService.DeleteBookAsync(id);
+        if (!result)
+            return BadRequest("Failed to delete the book");
+        return Ok("Book deleted successfully");
     }
 }

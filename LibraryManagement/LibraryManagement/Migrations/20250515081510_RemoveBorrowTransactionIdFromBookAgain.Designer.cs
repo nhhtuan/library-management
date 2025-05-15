@@ -4,6 +4,7 @@ using LibraryManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LibraryManagement.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    partial class LibraryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250515081510_RemoveBorrowTransactionIdFromBookAgain")]
+    partial class RemoveBorrowTransactionIdFromBookAgain
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,24 +24,6 @@ namespace LibraryManagement.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("BookBorrowTransaction", b =>
-                {
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BorrowTransactionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("BookId", "BorrowTransactionId");
-
-                    b.HasIndex("BorrowTransactionId");
-
-                    b.ToTable("BookBorrowTransactions");
-                });
 
             modelBuilder.Entity("LibraryManagement.Models.Book", b =>
                 {
@@ -51,6 +36,9 @@ namespace LibraryManagement.Migrations
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BorrowTransactionId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -80,6 +68,8 @@ namespace LibraryManagement.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BorrowTransactionId");
 
                     b.ToTable("Books");
                 });
@@ -160,28 +150,16 @@ namespace LibraryManagement.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("BookBorrowTransaction", b =>
+            modelBuilder.Entity("LibraryManagement.Models.Book", b =>
                 {
-                    b.HasOne("LibraryManagement.Models.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LibraryManagement.Models.BorrowTransaction", "BorrowTransaction")
-                        .WithMany("BookBorrowTransactions")
-                        .HasForeignKey("BorrowTransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-
-                    b.Navigation("BorrowTransaction");
+                    b.HasOne("LibraryManagement.Models.BorrowTransaction", null)
+                        .WithMany("BorrowedBooks")
+                        .HasForeignKey("BorrowTransactionId");
                 });
 
             modelBuilder.Entity("LibraryManagement.Models.BorrowTransaction", b =>
                 {
-                    b.Navigation("BookBorrowTransactions");
+                    b.Navigation("BorrowedBooks");
                 });
 #pragma warning restore 612, 618
         }

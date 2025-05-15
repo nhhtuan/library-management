@@ -1,6 +1,7 @@
 using AutoMapper;
 using LibraryManagement.Data;
 using LibraryManagement.DTOs.Book;
+using LibraryManagement.DTOs.User;
 using LibraryManagement.Enums;
 using LibraryManagement.Models;
 using LibraryManagement.Services.Interfaces;
@@ -63,6 +64,8 @@ public class BookService : IBookService
         }
 
         // Apply pagination
+        if (filter.Page < 1) throw new ArgumentOutOfRangeException("Page must be greater than 0");
+        if (filter.PageSize < 1 || filter.PageSize > 50) throw new ArgumentOutOfRangeException("PageSize must be greater than 0 and less than or equal to 50");
         var books = await query
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
@@ -116,7 +119,8 @@ public class BookService : IBookService
     }
     public async Task<BookResponse> UpdateBookAsync(int id, UpdateBookRequest request)
     {
-        var book = await _db.Books.FindAsync(id);
+        var book = await _db.Books.Where(b => b.Id == id && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
         if (book == null)
             throw new KeyNotFoundException("Book not found");
 
@@ -132,9 +136,38 @@ public class BookService : IBookService
 
         return _mapper.Map<BookResponse>(book);
     }
+
+    public async Task<BookResponse> PatchBookAsync(int id, PatchBookRequest request)
+    {
+        var book = await _db.Books.Where(b => b.Id == id && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
+        if (book == null)
+            throw new KeyNotFoundException("Book not found");
+
+        if (request.Title != null)
+            book.Title = request.Title;
+        if (request.Author != null)
+            book.Author = request.Author;
+        if (request.Genre != null)
+            book.Genre = request.Genre;
+        if (request.PublishedYear.HasValue)
+            book.PublishedYear = request.PublishedYear.Value;
+        if (request.Description != null)
+            book.Description = request.Description;
+        if (request.Quantity.HasValue)
+            book.Quantity = request.Quantity.Value;
+
+        book.UpdatedAt = DateTime.UtcNow;
+        _db.Books.Update(book);
+        await _db.SaveChangesAsync();
+
+        return _mapper.Map<BookResponse>(book);
+    }
+
     public async Task<bool> DeleteBookAsync(int id)
     {
-        var book = await _db.Books.FindAsync(id);
+        var book = await _db.Books.Where(b => b.Id == id && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
         if (book == null)
             throw new KeyNotFoundException("Book not found");
 
