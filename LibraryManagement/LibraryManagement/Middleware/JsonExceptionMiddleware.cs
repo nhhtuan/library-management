@@ -1,75 +1,86 @@
 using System.Text.Json;
+using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-public class JsonExceptionMiddleware
+namespace LibraryManagement.Middleware
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<JsonExceptionMiddleware> _logger;
-
-    public JsonExceptionMiddleware(RequestDelegate next, ILogger<JsonExceptionMiddleware> logger)
+    public class JsonExceptionMiddleware
     {
-        _next = next;
-        _logger = logger;
-    }
+        private readonly RequestDelegate _next;
+        private readonly ILogger<JsonExceptionMiddleware> _logger;
+        private readonly IHostEnvironment _environment;
 
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try
+        public JsonExceptionMiddleware(
+            RequestDelegate next,
+            ILogger<JsonExceptionMiddleware> logger,
+            IHostEnvironment environment)
         {
-            await _next(context);
+            _next = next;
+            _logger = logger;
+            _environment = environment;
         }
-        catch (JsonException jsonEx)
-        {
-            _logger.LogError(jsonEx, "JSON parsing error");
 
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        public async Task InvokeAsync(HttpContext context)
+        {
+            try
+            {
+                await _next(context);
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "JSON parsing error");
+                await HandleExceptionAsync(context, jsonEx, "Invalid JSON format", StatusCodes.Status400BadRequest);
+            }
+            catch (KeyNotFoundException notFoundEx)
+            {
+                _logger.LogWarning(notFoundEx, "Resource not found");
+                await HandleExceptionAsync(context, notFoundEx, "Resource not found", StatusCodes.Status404NotFound);
+            }
+            catch (UnauthorizedAccessException unauthorizedEx)
+            {
+                _logger.LogWarning(unauthorizedEx, "Unauthorized access attempt");
+                await HandleExceptionAsync(context, unauthorizedEx, "Unauthorized access", StatusCodes.Status401Unauthorized);
+            }
+            catch (InvalidOperationException invOpEx)
+            {
+                _logger.LogWarning(invOpEx, "Invalid operation");
+                await HandleExceptionAsync(context, invOpEx, "Invalid operation", StatusCodes.Status400BadRequest);
+            }
+            catch (ArgumentException argEx)
+            {
+                _logger.LogWarning(argEx, "Invalid argument");
+                await HandleExceptionAsync(context, argEx, "Invalid argument", StatusCodes.Status400BadRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error");
+                await HandleExceptionAsync(context, ex, "Internal Server Error", StatusCodes.Status500InternalServerError);
+            }
+
+
+        }
+
+        private async Task HandleExceptionAsync(HttpContext context, Exception exception, string title, int statusCode)
+        {
+            context.Response.StatusCode = statusCode;
             context.Response.ContentType = "application/json";
 
-            var result = new
+            var response = new
             {
-                title = "Invalid JSON format",
-                detail = jsonEx.Message,
-                status = 400,
+                title = title,
+                status = statusCode,
+                detail = _environment.IsDevelopment() ? exception.Message : "An error occurred.",
+                errors = _environment.IsDevelopment() ? new[] { exception.StackTrace } : null,
                 traceId = context.TraceIdentifier
             };
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(result));
-        }
-        catch (InvalidOperationException invOpEx) when (invOpEx.Message.Contains("could not be converted"))
-        {
-            _logger.LogError(invOpEx, "Type conversion error");
-
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            context.Response.ContentType = "application/json";
-
-            var result = new
+            var options = new JsonSerializerOptions
             {
-                title = "Data type conversion error",
-                detail = invOpEx.Message,
-                status = 400,
-                traceId = context.TraceIdentifier
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(result));
-        }
-        // Catch-all fallback
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error");
-
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/json";
-
-            var result = new
-            {
-                title = "Internal Server Error",
-                detail = "An unexpected error occurred.",
-                status = 500,
-                traceId = context.TraceIdentifier
-            };
-
-            await context.Response.WriteAsync(JsonSerializer.Serialize(result));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
         }
     }
 }

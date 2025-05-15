@@ -1,6 +1,7 @@
 using AutoMapper;
 using LibraryManagement.Data;
 using LibraryManagement.DTOs.Borrow;
+using LibraryManagement.Models;
 
 namespace LibraryManagement.Services;
 
@@ -16,5 +17,12 @@ public class BorrowBookService
     }
 
 
+    public async Task<BorrowTransactionResponse> CreateBorrowTransactionAsync(CreateBorrowTransactionRequest request)
+    {
+        var transaction = _mapper.Map<BorrowTransaction>(request);
+        await _db.BorrowTransactions.AddAsync(transaction);
+        await _db.SaveChangesAsync();
+        return _mapper.Map<BorrowTransactionResponse>(transaction);
+    }
 
 }

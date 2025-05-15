@@ -1,6 +1,7 @@
 
 using LibraryManagement.Data;
 using LibraryManagement.Enums;
+using LibraryManagement.Middleware;
 using LibraryManagement.Models;
 using LibraryManagement.Services;
 using LibraryManagement.Services.Interfaces;
@@ -57,9 +58,10 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<JsonExceptionMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<JsonExceptionMiddleware>();
 
 app.MapControllers();
 

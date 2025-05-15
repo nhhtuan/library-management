@@ -91,6 +91,14 @@ public class BookService : IBookService
 
     public async Task<BookResponse> CreateBookAsync(CreateBookRequest request)
     {
+
+        // Check if the book already exists
+        var existingBook = await _db.Books
+            .Where(b => b.Title == request.Title && b.Author == request.Author && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
+
+        if (existingBook != null)
+            throw new InvalidOperationException("Book already exists");
         var book = new Book
         {
             Title = request.Title,

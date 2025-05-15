@@ -1,6 +1,7 @@
 using AutoMapper;
 using LibraryManagement.DTOs.Auth;
 using LibraryManagement.DTOs.Book;
+using LibraryManagement.DTOs.Borrow;
 using LibraryManagement.DTOs.User;
 using LibraryManagement.Enums;
 using LibraryManagement.Models;
@@ -29,6 +30,9 @@ namespace LibraryManagement.Helpers
             CreateMap<Book, BookResponse>();
 
 
+            // Borrow mappings
+            CreateMap<CreateBorrowTransactionRequest, BorrowTransaction>();
+            CreateMap<BorrowTransaction, BorrowTransactionResponse>();
         }
     }
 }
