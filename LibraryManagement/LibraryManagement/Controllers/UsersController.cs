@@ -56,10 +56,17 @@ public class UsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
-        var createdUser = await _userService.CreateUserAsync(request);
-        if (createdUser == null)
-            return BadRequest("User creation failed");
-        return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+        try
+        {
+            var createdUser = await _userService.CreateUserAsync(request);
+            if (createdUser == null)
+                return BadRequest("User creation failed");
+            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     // [HttpPatch("{id}")]

@@ -12,11 +12,13 @@ public class AuthService : IAuthService
 {
     private readonly LibraryDbContext _db;
     private readonly JwtService _jwt;
+    private readonly IPasswordHasher<User> _hasher;
 
-    public AuthService(LibraryDbContext db, JwtService jwt, IMapper mapper)
+    public AuthService(LibraryDbContext db, JwtService jwt, IPasswordHasher<User> hasher)
     {
         _jwt = jwt;
         _db = db;
+        _hasher = hasher;
     }
 
 
@@ -27,8 +29,10 @@ public class AuthService : IAuthService
         if (user == null)
             throw new UnauthorizedAccessException("Invalid username or password");
 
-        var hasher = new PasswordHasher<User>();
-        var result = hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+        //var hasher = new PasswordHasher<User>();
+        //var result = hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+
+        var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
         if (result == PasswordVerificationResult.Failed)
             throw new UnauthorizedAccessException("Invalid username or password");

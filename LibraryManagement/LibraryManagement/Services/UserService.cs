@@ -13,11 +13,12 @@ public class UserService : IUserService
 {
     private readonly LibraryDbContext _db;
     private readonly IMapper _mapper;
-
-    public UserService(LibraryDbContext db, IMapper mapper)
+    private readonly IPasswordHasher<User> _hasher;
+    public UserService(LibraryDbContext db, IMapper mapper, IPasswordHasher<User> hasher)
     {
         _mapper = mapper;
         _db = db;
+        _hasher = hasher;
     }
 
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
@@ -41,14 +42,19 @@ public class UserService : IUserService
 
     public async Task<UserResponse> CreateUserAsync(CreateUserRequest request)
     {
+
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username && u.DeletedAt == null))
+            throw new InvalidOperationException("Username already exists");
+
         var user = new User
         {
             Username = request.Username,
             Role = request.Role
         };
 
-        var hasher = new PasswordHasher<User>();
-        user.PasswordHash = hasher.HashPassword(user, request.Password);
+        //var hasher = new PasswordHasher<User>();
+        //user.PasswordHash = hasher.HashPassword(user, request.Password);
+        user.PasswordHash = _hasher.HashPassword(user, request.Password);
         await _db.Users.AddAsync(user);
         await _db.SaveChangesAsync();
 

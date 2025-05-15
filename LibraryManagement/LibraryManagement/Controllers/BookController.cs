@@ -31,10 +31,17 @@ public class BookController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetBookById(int id)
     {
-        var bookResponse = await _bookService.GetBookByIdAsync(id);
-        if (bookResponse == null)
-            return NotFound("Book not found");
-        return Ok(bookResponse);
+        try
+        {
+            var bookResponse = await _bookService.GetBookByIdAsync(id);
+            if (bookResponse == null)
+                return NotFound("Book not found");
+            return Ok(bookResponse);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     [HttpPost]
@@ -64,14 +71,19 @@ public class BookController : ControllerBase
     public async Task<IActionResult> DeleteBook(int id)
     {
 
-        // Check if the book exists
-        var book = await _bookService.GetBookByIdAsync(id);
-        if (book == null)
-            return NotFound("Book not found");
+        try
+        {
+            // Check if the book exists
+            var book = await _bookService.GetBookByIdAsync(id);
 
-        var result = await _bookService.DeleteBookAsync(id);
-        if (!result)
-            return BadRequest("Failed to delete the book");
-        return Ok("Book deleted successfully");
+            var result = await _bookService.DeleteBookAsync(id);
+            if (!result)
+                return BadRequest("Failed to delete the book");
+            return Ok("Book deleted successfully");
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 }

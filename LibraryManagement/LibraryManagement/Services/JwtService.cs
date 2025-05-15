@@ -54,37 +54,4 @@ public class JwtService
         return DateTime.UtcNow.AddDays(7);
     }
 
-    // public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
-    // {
-    //     var tokenValidationParameters = new TokenValidationParameters
-    //     {
-    //         ValidateAudience = true,
-    //         ValidateIssuer = true,
-    //         ValidateIssuerSigningKey = true,
-    //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)),
-    //         ValidIssuer = _config["Jwt:Issuer"],
-    //         ValidAudience = _config["Jwt:Audience"],
-    //         ValidateLifetime = false // Quan trọng: cho phép token hết hạn vẫn được verify
-    //     };
-
-    //     var tokenHandler = new JwtSecurityTokenHandler();
-
-    //     try
-    //     {
-    //         var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-
-    //         if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-    //             !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
-    //             StringComparison.InvariantCultureIgnoreCase))
-    //         {
-    //             return null;
-    //         }
-
-    //         return principal;
-    //     }
-    //     catch
-    //     {
-    //         return null;
-    //     }
-    // }
 }
