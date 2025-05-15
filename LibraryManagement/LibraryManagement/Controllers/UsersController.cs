@@ -19,10 +19,13 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
     private readonly IMapper _mapper;
 
-    public UsersController(IUserService userService, IMapper mapper)
+    private readonly LibraryDbContext _context;
+
+    public UsersController(IUserService userService, IMapper mapper, LibraryDbContext context)
     {
         _userService = userService;
         _mapper = mapper;
+        _context = context;
     }
 
     [HttpGet]
@@ -91,7 +94,7 @@ public class UsersController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteUser(int id)
+    public async Task<IActionResult> DeleteUser(int id) // Soft delete
     {
         try
         {
@@ -108,5 +111,24 @@ public class UsersController : ControllerBase
             return NotFound(ex.Message);
         }
     }
+
+
+    // [HttpDelete("{id}")]
+    // public async Task<IActionResult> DeleteBook(int id)
+    // {
+    //     var user = await _context.Users.Where(u => u.Id == id)
+    //         .FirstOrDefaultAsync();
+
+    //     if (user == null)
+    //     {
+    //         return NotFound(new { message = "Book not found" });
+    //     }
+
+    //     _context.Users.Remove(user);
+    //     await _context.SaveChangesAsync();
+
+    //     return NoContent(); // 204 - Xóa thành công, không trả về nội dung
+    // }
+
 
 }
