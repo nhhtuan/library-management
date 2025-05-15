@@ -5,6 +5,7 @@ using LibraryManagement.Models;
 using LibraryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,10 +37,15 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetUserById(int id)
     {
-        var user = await _userService.GetUserByIdAsync(id);
-        if (user == null)
-            return NotFound("User not found");
-        return Ok(user);
+        try
+        {
+            var userResponse = await _userService.GetUserByIdAsync(id);
+            return Ok(userResponse);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
 
@@ -53,33 +59,54 @@ public class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
     }
 
+    // [HttpPatch("{id}")]
+    // [Authorize(Roles = "Admin")]
+    // public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+    // {
+    //     try
+    //     {
+    //         var userResponse = await _userService.UpdateUserAsync(id, request);
+    //         return Ok(userResponse);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return NotFound(ex.Message);
+    //     }
+    // }
+
     [HttpPatch("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+    public async Task<IActionResult> PatchUser(int id, [FromBody] PatchUserRequest request)
     {
-        var user = await _userService.GetUserByIdAsync(id);
-        if (user == null)
-            return NotFound("User not found");
-
-        _mapper.Map(request, user);
-        var userResponse = await _userService.UpdateUserAsync(id, request);
-
-        return Ok(userResponse);
+        try
+        {
+            var userResponse = await _userService.PatchUserAsync(id, request);
+            return Ok(userResponse);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteUser(int id)
     {
-        var user = await _userService.GetUserByIdAsync(id);
-        if (user == null)
-            return NotFound("User not found");
+        try
+        {
+            var user = await _userService.GetUserByIdAsync(id);
 
-        var result = await _userService.DeleteUserAsync(id);
-        if (!result)
-            return BadRequest("User deletion failed");
+            var result = await _userService.DeleteUserAsync(id);
+            if (!result)
+                return BadRequest("User deletion failed");
 
-        return Ok("User deleted successfully");
+            return Ok("User deleted successfully");
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
 }

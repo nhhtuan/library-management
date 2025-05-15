@@ -27,6 +27,8 @@ namespace LibraryManagement.Helpers
 
             // Book mappings
             CreateMap<Book, BookResponse>();
+
+
         }
     }
 }

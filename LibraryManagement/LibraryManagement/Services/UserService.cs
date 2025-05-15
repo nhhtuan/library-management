@@ -4,6 +4,7 @@ using LibraryManagement.DTOs.User;
 using LibraryManagement.Models;
 using LibraryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Services;
@@ -56,7 +57,8 @@ public class UserService : IUserService
 
     public async Task<UserResponse> UpdateUserAsync(int id, UpdateUserRequest request)
     {
-        var user = await _db.Users.FindAsync(id);
+        var user = await _db.Users.Where(u => u.Id == id && u.DeletedAt == null)
+            .FirstOrDefaultAsync();
         if (user == null)
             throw new KeyNotFoundException("User not found");
 
@@ -84,4 +86,29 @@ public class UserService : IUserService
         await _db.SaveChangesAsync();
         return true;
     }
+
+    public async Task<UserResponse> PatchUserAsync(int id, PatchUserRequest request)
+    {
+        var user = await _db.Users.Where(u => u.Id == id && u.DeletedAt == null)
+            .FirstOrDefaultAsync();
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        if (request.UserRole.HasValue)
+            user.Role = request.UserRole.Value;
+
+        if (request.FullName != null)
+            user.FullName = request.FullName;
+
+        if (request.DateOfBirth.HasValue)
+            user.DateOfBirth = request.DateOfBirth;
+
+        user.UpdatedAt = DateTime.UtcNow;
+
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+
+        return _mapper.Map<UserResponse>(user);
+    }
+
 }
