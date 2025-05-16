@@ -65,6 +65,16 @@ public class BorrowController : ControllerBase
         var result = await _borrowService.DeleteBorrowTransactionAsync(id);
         if (!result)
             return BadRequest("Borrow transaction deletion failed");
-        return NoContent();
+        return Ok("Borrow transaction deleted successfully");
+    }
+
+    [HttpPost("{id}/return")]
+    [Authorize]
+    public async Task<IActionResult> ReturnBook(int id)
+    {
+        var result = await _borrowService.ReturnBookAsync(id);
+        if (!result)
+            return BadRequest("Book return failed");
+        return Ok("Book returned successfully");
     }
 }

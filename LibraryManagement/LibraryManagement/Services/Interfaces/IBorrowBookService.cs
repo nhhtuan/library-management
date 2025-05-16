@@ -11,4 +11,5 @@ public interface IBorrowBookService
     Task<IEnumerable<BorrowTransactionResponse>> GetAllBorrowTransactionsAsync();
     Task<BorrowTransactionResponse> PatchBorrowTransactionAsync(int id, PatchBorrowTransactionRequest request);
     Task<bool> DeleteBorrowTransactionAsync(int id);
+    Task<bool> ReturnBookAsync(int id);
 }

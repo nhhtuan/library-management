@@ -136,27 +136,15 @@ public class BorrowBookService : IBorrowBookService
                 throw new KeyNotFoundException("Borrow transaction not found");
 
             // Ngăn chặn việc update cho giao dịch đã trả sách
-            if (borrowTransaction.ReturnDate != null && !request.ReturnDate.HasValue)
+            if (borrowTransaction.ReturnDate != null)
                 throw new InvalidOperationException("Cannot modify a transaction that has been returned");
 
-            // Xử lý các trường thông thường
             if (request.BorrowerName != null)
                 borrowTransaction.BorrowerName = request.BorrowerName;
             if (request.PhoneNumber != null)
                 borrowTransaction.PhoneNumber = request.PhoneNumber;
             if (request.DueDate.HasValue)
                 borrowTransaction.DueDate = request.DueDate.Value;
-            if (request.ReturnDate.HasValue)
-            {
-                borrowTransaction.ReturnDate = request.ReturnDate.Value;
-                // Nếu có ngày trả sách, cập nhật lại số lượng sách trong kho
-                foreach (var bookBorrow in borrowTransaction.BookBorrowTransactions)
-                {
-                    var book = await _db.Books.FindAsync(bookBorrow.BookId);
-                    if (book != null)
-                        book.Quantity += bookBorrow.Quantity;
-                }
-            }
 
             // Xử lý trường hợp trả sách
             if (request.BooksBorrow != null)
@@ -210,15 +198,26 @@ public class BorrowBookService : IBorrowBookService
                     borrowTransaction.BookBorrowTransactions.Remove(removeItem);
                 }
 
-                // Validate max 5 books
-                var result = await IsHoldMax5BooksAsync(borrowTransaction.PhoneNumber, borrowTransaction.TotalBooksBorrowed);
-                if (!result)
-                    throw new InvalidOperationException("You cannot hold more than 5 books");
             }
 
 
             borrowTransaction.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+
+            // Validate max 5 books
+            //var result = await IsHoldMax5BooksAsync(borrowTransaction.PhoneNumber, borrowTransaction.TotalBooksBorrowed);
+
+            // Tính lại tổng số sách đang giữ của user này (trừ transaction hiện tại)
+            var totalBooksHeld = await _db.BorrowTransactions
+                .Where(bt => bt.PhoneNumber == borrowTransaction.PhoneNumber
+                    && bt.DeletedAt == null
+                    && bt.ReturnDate == null
+                    && bt.Id != borrowTransaction.Id) // Trừ chính giao dịch đang update
+                .SelectMany(bt => bt.BookBorrowTransactions)
+                .SumAsync(bbt => bbt.Quantity);
+
+            if (totalBooksHeld + borrowTransaction.TotalBooksBorrowed > 5)
+                throw new InvalidOperationException("You cannot hold more than 5 books");
 
             // Commit transaction nếu mọi thứ ổn
             await transaction.CommitAsync();
@@ -245,6 +244,35 @@ public class BorrowBookService : IBorrowBookService
 
         borrowTransaction.DeletedAt = DateTime.UtcNow;
         _db.BorrowTransactions.Update(borrowTransaction);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+
+    public async Task<bool> ReturnBookAsync(int id)
+    {
+        var borrowTransaction = await _db.BorrowTransactions
+            .Include(b => b.BookBorrowTransactions)
+            .ThenInclude(bb => bb.Book)
+            .Where(b => b.Id == id && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
+
+        if (borrowTransaction == null)
+            throw new KeyNotFoundException("Borrow transaction not found");
+
+        // Ngăn chặn việc trả sách cho giao dịch đã trả sách
+        if (borrowTransaction.ReturnDate != null)
+            throw new InvalidOperationException("Cannot return a transaction that has already been returned");
+
+        borrowTransaction.ReturnDate = DateTime.UtcNow;
+
+        foreach (var bookBorrow in borrowTransaction.BookBorrowTransactions)
+        {
+            var book = await _db.Books.FindAsync(bookBorrow.BookId);
+            if (book != null)
+                book.Quantity += bookBorrow.Quantity;
+        }
+
         await _db.SaveChangesAsync();
         return true;
     }

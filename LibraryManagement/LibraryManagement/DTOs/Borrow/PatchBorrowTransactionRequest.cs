@@ -13,8 +13,6 @@ namespace LibraryManagement.DTOs.User
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public DateTime? DueDate { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public DateTime? ReturnDate { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<BookBorrowTransactionRequest>? BooksBorrow { get; set; }
 
     }
