@@ -30,6 +30,7 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IBorrowBookService, BorrowBookService>();
 
 builder.Services.AddScoped<IPasswordHasher<User>>(provider =>
     new CustomPasswordHasher<User>("hash:Key"));

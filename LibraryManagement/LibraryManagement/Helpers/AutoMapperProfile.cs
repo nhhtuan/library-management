@@ -31,8 +31,19 @@ namespace LibraryManagement.Helpers
 
 
             // Borrow mappings
-            CreateMap<CreateBorrowTransactionRequest, BorrowTransaction>();
-            CreateMap<BorrowTransaction, BorrowTransactionResponse>();
+            CreateMap<CreateBorrowTransactionRequest, BorrowTransaction>().
+            ForMember(dest => dest.BookBorrowTransactions, otp => otp.Ignore());
+            CreateMap<BorrowTransaction, BorrowTransactionResponse>()
+                .ForMember(dest => dest.BorrowedBooks, opt => opt.MapFrom(src => src.BookBorrowTransactions.Select(b => new BookBorrowTransactionResponse
+                {
+                    BookId = b.BookId,
+                    BookTitle = b.Book.Title,
+                    Author = b.Book.Author,
+                    Genre = b.Book.Genre,
+                    PublishedYear = b.Book.PublishedYear,
+                    Description = b.Book.Description,
+                    BorrowedQuantity = b.Quantity
+                })));
         }
     }
 }

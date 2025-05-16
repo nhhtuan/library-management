@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore.Storage;
+
 namespace LibraryManagement.DTOs.Borrow;
 
 public class BorrowTransactionResponse
@@ -7,7 +9,9 @@ public class BorrowTransactionResponse
     public string PhoneNumber { get; set; } = string.Empty;
     public DateTime BorrowDate { get; set; }
     public DateTime DueDate { get; set; }
-    public List<BorrowedBookResponse> BorrowedBooks { get; set; } = new List<BorrowedBookResponse>();
+    public int TotalBooksBorrowed { get; set; }
+    public List<BookBorrowTransactionResponse> BorrowedBooks { get; set; } = new List<BookBorrowTransactionResponse>();
+
 
     public bool IsReturned { get; set; }
     public bool IsOverdue { get; set; }

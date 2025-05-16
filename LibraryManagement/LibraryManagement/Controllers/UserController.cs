@@ -13,7 +13,7 @@ namespace LibraryManagement.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController : ControllerBase
+public class UserController : ControllerBase
 {
 
     private readonly IUserService _userService;
@@ -21,7 +21,7 @@ public class UsersController : ControllerBase
 
     private readonly LibraryDbContext _context;
 
-    public UsersController(IUserService userService, IMapper mapper, LibraryDbContext context)
+    public UserController(IUserService userService, IMapper mapper, LibraryDbContext context)
     {
         _userService = userService;
         _mapper = mapper;
@@ -90,24 +90,5 @@ public class UsersController : ControllerBase
         return Ok("User deleted successfully");
 
     }
-
-
-
-    // [HttpDelete("{id}")]
-    // public async Task<IActionResult> DeleteBook(int id)
-    // {
-    //     var user = await _context.Users.Where(u => u.Id == id)
-    //         .FirstOrDefaultAsync();
-
-    //     if (user == null)
-    //     {
-    //         return NotFound(new { message = "Book not found" });
-    //     }
-
-    //     _context.Users.Remove(user);
-    //     await _context.SaveChangesAsync();
-
-    //     return NoContent(); // 204 - Xóa thành công, không trả về nội dung
-    // }
 
 }
