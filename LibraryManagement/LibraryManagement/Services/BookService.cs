@@ -47,7 +47,7 @@ public class BookService : IBookService
         }
 
         // Count total records
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.Where(q => q.DeletedAt == null).CountAsync();
 
         // Apply sorting
         if (!string.IsNullOrWhiteSpace(filter.SortBy))
@@ -69,6 +69,7 @@ public class BookService : IBookService
         var books = await query
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
+            .Where(b => b.DeletedAt == null)
             .ToListAsync();
 
         var bookResponses = _mapper.Map<List<BookResponse>>(books);

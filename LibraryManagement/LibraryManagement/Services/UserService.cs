@@ -1,5 +1,7 @@
 using AutoMapper;
 using LibraryManagement.Data;
+using LibraryManagement.DTOs;
+using LibraryManagement.DTOs.Book;
 using LibraryManagement.DTOs.User;
 using LibraryManagement.Models;
 using LibraryManagement.Services.Interfaces;
@@ -21,13 +23,32 @@ public class UserService : IUserService
         _hasher = hasher;
     }
 
-    public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+    public async Task<PaginatedResponse<UserDto>> GetAllUsersAsync(PaginatedRequest request)
     {
-        var users = await _db.Users
-        .Where(u => u.DeletedAt == null)
+        // var users = await _db.Users
+        // .Where(u => u.DeletedAt == null)
+        //     .ToListAsync();
+
+        IQueryable<User> query = _db.Users.AsNoTracking();
+        var totalCount = await query.Where(q => q.DeletedAt == null).CountAsync();
+
+        // Apply pagination
+        if (request.Page < 1) throw new ArgumentOutOfRangeException("Page must be greater than 0");
+        if (request.PageSize < 1 || request.PageSize > 50) throw new ArgumentOutOfRangeException("PageSize must be greater than 0 and less than or equal to 50");
+        var users = await query
+            .Where(u => u.DeletedAt == null)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync();
 
-        return _mapper.Map<IEnumerable<UserDto>>(users);
+        var userDtoResponse = _mapper.Map<List<UserDto>>(users);
+        return new PaginatedResponse<UserDto>
+        {
+            Items = userDtoResponse,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 
     public async Task<UserResponse> GetUserByIdAsync(int id)

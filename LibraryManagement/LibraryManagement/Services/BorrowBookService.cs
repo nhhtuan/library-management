@@ -1,7 +1,11 @@
+using System.Linq.Dynamic.Core;
 using AutoMapper;
 using LibraryManagement.Data;
+using LibraryManagement.DTOs;
+using LibraryManagement.DTOs.Book;
 using LibraryManagement.DTOs.Borrow;
 using LibraryManagement.DTOs.User;
+using LibraryManagement.Enums;
 using LibraryManagement.Models;
 using LibraryManagement.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -20,15 +24,62 @@ public class BorrowBookService : IBorrowBookService
     }
 
 
-    public async Task<IEnumerable<BorrowTransactionResponse>> GetAllBorrowTransactionsAsync()
+    public async Task<PaginatedResponse<BorrowTransactionResponse>> GetAllBorrowTransactionsAsync(BorrowTransactionFilterRequest request)
     {
-        var borrowTransactions = await _db.BorrowTransactions
+
+        IQueryable<BorrowTransaction> query = _db.BorrowTransactions.AsNoTracking();
+
+
+        // Apply filters
+        if (request.IsReturned.HasValue)
+        {
+            if (request.IsReturned.Value)
+            {
+                query = query.Where(b => b.ReturnDate != null);
+            }
+            else
+            {
+                query = query.Where(b => b.ReturnDate == null);
+            }
+        }
+
+
+        // Apply sorting
+        if (!string.IsNullOrWhiteSpace(request.SortBy))
+        {
+            var sortOrder = request.SortOrder == SortOrder.Desc ? "descending" : "ascending";
+            query = query.OrderBy($"{request.SortBy} {sortOrder}");
+        }
+        else
+        {
+            query = request.SortOrder == SortOrder.Desc ?
+                    query.OrderByDescending(b => b.CreatedAt) :
+                    query.OrderBy(b => b.CreatedAt);
+
+        }
+
+        var totalCount = await query.Where(q => q.DeletedAt == null).CountAsync();
+
+        // Apply pagination
+        if (request.Page < 1) throw new ArgumentOutOfRangeException("Page must be greater than 0");
+        if (request.PageSize < 1 || request.PageSize > 50) throw new ArgumentOutOfRangeException("PageSize must be greater than 0 and less than or equal to 50");
+        var borrowTransactions = await query
             .Include(b => b.BookBorrowTransactions)
             .ThenInclude(bb => bb.Book)
-            .Where(b => b.DeletedAt == null)
+            .Where(u => u.DeletedAt == null)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync();
 
-        return _mapper.Map<IEnumerable<BorrowTransactionResponse>>(borrowTransactions);
+        var borrowTransactionResponse = _mapper.Map<List<BorrowTransactionResponse>>(borrowTransactions);
+
+        return new PaginatedResponse<BorrowTransactionResponse>
+        {
+            Items = borrowTransactionResponse,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 
 
@@ -105,18 +156,64 @@ public class BorrowBookService : IBorrowBookService
     }
 
 
-    public async Task<IEnumerable<BorrowTransactionResponse>> GetBorrowTransactionsByPhoneNumberAsync(string phoneNumber)
+    public async Task<PaginatedResponse<BorrowTransactionResponse>> GetBorrowTransactionsByPhoneNumberAsync(string phoneNumber, BorrowTransactionFilterRequest request)
     {
-        var borrowTransaction = await _db.BorrowTransactions
+
+        IQueryable<BorrowTransaction> query = _db.BorrowTransactions.AsNoTracking();
+
+        // Apply filters
+        if (request.IsReturned.HasValue)
+        {
+            if (request.IsReturned.Value)
+            {
+                query = query.Where(b => b.ReturnDate != null);
+            }
+            else
+            {
+                query = query.Where(b => b.ReturnDate == null);
+            }
+        }
+
+
+        // Apply sorting
+        if (!string.IsNullOrWhiteSpace(request.SortBy))
+        {
+            var sortOrder = request.SortOrder == SortOrder.Desc ? "descending" : "ascending";
+            query = query.OrderBy($"{request.SortBy} {sortOrder}");
+        }
+        else
+        {
+            query = request.SortOrder == SortOrder.Desc ?
+                    query.OrderByDescending(b => b.CreatedAt) :
+                    query.OrderBy(b => b.CreatedAt);
+
+        }
+
+        var totalCount = await query.Where(q => q.DeletedAt == null).CountAsync();
+
+        // Apply pagination
+        if (request.Page < 1) throw new ArgumentOutOfRangeException("Page must be greater than 0");
+        if (request.PageSize < 1 || request.PageSize > 50) throw new ArgumentOutOfRangeException("PageSize must be greater than 0 and less than or equal to 50");
+        var borrowTransactions = await query
             .Include(b => b.BookBorrowTransactions)
             .ThenInclude(bb => bb.Book)
             .Where(b => b.PhoneNumber == phoneNumber && b.DeletedAt == null)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync();
 
-        if (borrowTransaction == null)
+        if (borrowTransactions == null)
             throw new KeyNotFoundException("Borrow transaction not found");
 
-        return _mapper.Map<IEnumerable<BorrowTransactionResponse>>(borrowTransaction);
+        var borrowTransactionResponse = _mapper.Map<List<BorrowTransactionResponse>>(borrowTransactions);
+
+        return new PaginatedResponse<BorrowTransactionResponse>
+        {
+            Items = borrowTransactionResponse,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 
 

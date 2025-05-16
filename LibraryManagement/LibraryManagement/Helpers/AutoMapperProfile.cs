@@ -44,6 +44,7 @@ namespace LibraryManagement.Helpers
                     Description = b.Book.Description,
                     BorrowedQuantity = b.Quantity
                 })));
+
         }
     }
 }

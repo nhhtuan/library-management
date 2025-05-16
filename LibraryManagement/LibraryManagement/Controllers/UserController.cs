@@ -1,5 +1,6 @@
 using AutoMapper;
 using LibraryManagement.Data;
+using LibraryManagement.DTOs;
 using LibraryManagement.DTOs.User;
 using LibraryManagement.Models;
 using LibraryManagement.Services.Interfaces;
@@ -30,9 +31,9 @@ public class UserController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetAllUsers()
+    public async Task<IActionResult> GetAllUsers([FromQuery] PaginatedRequest request)
     {
-        var users = await _userService.GetAllUsersAsync();
+        var users = await _userService.GetAllUsersAsync(request);
         return Ok(users);
     }
 

@@ -1,3 +1,4 @@
+using LibraryManagement.DTOs;
 using LibraryManagement.DTOs.Borrow;
 using LibraryManagement.DTOs.User;
 using LibraryManagement.Services.Interfaces;
@@ -17,9 +18,9 @@ public class BorrowController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetAllBorrowTransactions()
+    public async Task<IActionResult> GetAllBorrowTransactions([FromQuery] BorrowTransactionFilterRequest request)
     {
-        var borrowResponses = await _borrowService.GetAllBorrowTransactionsAsync();
+        var borrowResponses = await _borrowService.GetAllBorrowTransactionsAsync(request);
         return Ok(borrowResponses);
     }
 
@@ -33,9 +34,9 @@ public class BorrowController : ControllerBase
 
     [HttpGet("user/{phoneNumber}")]
     [Authorize]
-    public async Task<IActionResult> GetBorrowTransactionsByPhoneNumber(string phoneNumber)
+    public async Task<IActionResult> GetBorrowTransactionsByPhoneNumber(string phoneNumber, [FromQuery] BorrowTransactionFilterRequest request)
     {
-        var borrowResponses = await _borrowService.GetBorrowTransactionsByPhoneNumberAsync(phoneNumber);
+        var borrowResponses = await _borrowService.GetBorrowTransactionsByPhoneNumberAsync(phoneNumber, request);
         return Ok(borrowResponses);
     }
 
